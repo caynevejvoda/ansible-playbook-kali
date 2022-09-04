@@ -1,0 +1,53 @@
+---
+- name: Configure Kali Linux
+  hosts: localhost
+  tasks:
+    - name: Upgrade all packages
+      ansible.builtin.apt:
+        name: "*"
+        only_upgrade: true
+      become: true
+
+    - name: Install apt packages
+      ansible.builtin.apt:
+        name:
+          - flatpak
+          - gnome-software
+          - gnome-software-plugin-flatpak
+          - terminator
+          - exa
+          - htop
+        state: present
+      become: true
+
+    - name: Add the flathub flatpak repository
+      community.general.flatpak_remote:
+        name: flathub
+        state: present
+        flatpakrepo_url: https://dl.flathub.org/repo/flathub.flatpakrepo
+        method: user
+
+    - name: Install flatpak packages
+      community.general.flatpak:
+        name:
+          - org.chromium.Chromium
+          - com.uploadedlobster.peek
+          - org.keepassxc.KeePassXC
+          - net.cozic.joplin_desktop
+        method: user
+
+    - name: vscode
+      block:
+        - name: Add VSCode apt signing key
+          ansible.builtin.apt_key:
+            url: https://packages.microsoft.com/keys/microsoft.asc
+            state: present
+        - name: Add VSCode repo
+          ansible.builtin.apt_repository:
+            repo: deb [arch=amd64 signed-by=/usr/share/keyrings/vscode.gpg] https://packages.microsoft.com/repos/vscode stable main
+            state: present
+        - name: Install VSCode
+          ansible.builtin.apt:
+            name: code
+            state: present
+      become: true
